@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Security Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* RESET & BASE */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #06d6a0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-900: #0f172a;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        /* CARD */
+        .card {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            max-width: 800px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            animation: fadeUp 0.6s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        @keyframes fadeUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--gray-500);
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        /* INPUT SECTIONS */
+        .input-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--gray-700);
+            gap: 8px;
+        }
+
+        label i {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .demo-selector {
+            position: relative;
+        }
+
+        select, textarea, button {
+            width: 100%;
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            border: 1px solid var(--gray-300);
+            outline: none;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364758b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 18px;
+            padding-right: 50px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        /* DEMO CARDS */
+        .demo-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .demo-card {
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .demo-card.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .demo-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .demo-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        /* BUTTON */
+        .button-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .primary-btn:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #4338ca);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .secondary-btn {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .secondary-btn:hover {
+            background: var(--gray-200);
+        }
+
+        /* OUTPUT BOX */
+        .output {
+            margin-top: 30px;
+            background: var(--light);
+            border-radius: var(--radius-lg);
+            padding: 25px;
+            border: 1px solid var(--gray-200);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .output h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: var(--gray-100);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .copy-btn:hover {
+            background: var(--gray-200);
+        }
+
+        #result {
+            color: var(--gray-700);
+            white-space: pre-wrap;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            background: #ffffff;
+            padding: 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+            max-height: 350px;
+            overflow-y: auto;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        /* STATUS INDICATORS */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status.secure {
+            background: rgba(6, 214, 160, 0.1);
+            color: #059669;
+        }
+
+        .status.vulnerable {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        /* LOADING ANIMATION */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* SCROLLBAR */
+        #result::-webkit-scrollbar {
+            width: 8px;
+        }
+        #result::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 10px;
+        }
+        #result::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .card {
+                padding: 25px;
+            }
+            
+            .demo-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .button-container {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px;
+            }
+            
+            .demo-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            h2 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>LLM Security Attack Demo</h2>
+    <p class="subtitle">Explore different security vulnerabilities in Large Language Models</p>
+
+    <div class="input-section">
+        <label for="demo">
+            <i class="fas fa-shield-alt"></i>
+            Select Demo Type:
+        </label>
+        
+        <div class="demo-cards">
+            <div class="demo-card active" data-value="prompt_injection">
+                <div class="demo-icon">
+                    <i class="fas fa-code"></i>
+                </div>
+                <div class="demo-name">Prompt Injection</div>
+            </div>
+            <div class="demo-card" data-value="data_leakage">
+                <div class="demo-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="demo-name">Data Leakage</div>
+            </div>
+            <div class="demo-card" data-value="insecure_output">
+                <div class="demo-icon">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <div class="demo-name">Insecure Output</div>
+            </div>
+            <div class="demo-card" data-value="dos">
+                <div class="demo-icon">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <div class="demo-name">Denial of Service</div>
+            </div>
+            <div class="demo-card" data-value="supply_chain">
+                <div class="demo-icon">
+                    <i class="fas fa-link"></i>
+                </div>
+                <div class="demo-name">Supply Chain</div>
+            </div>
+        </div>
+        
+        <select id="demo">
+            <option value="prompt_injection">Prompt Injection</option>
+            <option value="data_leakage">Data Leakage</option>
+            <option value="insecure_output">Insecure Output Handling</option>
+            <option value="dos">Denial of Service (DoS)</option>
+            <option value="supply_chain">Supply Chain Vulnerabilities</option>
+        </select>
+    </div>
+
+    <div class="input-section">
+        <label for="userInput">
+            <i class="fas fa-keyboard"></i>
+            Enter Input:
+        </label>
+        <textarea id="userInput" rows="4" placeholder="Type your input prompt..."></textarea>
+    </div>
+
+    <div class="button-container">
+        <button class="primary-btn" onclick="runDemo()">
+            <i class="fas fa-play-circle"></i>
+            Run Demo
+        </button>
+        <button class="secondary-btn" onclick="clearInput()">
+            <i class="fas fa-eraser"></i>
+            Clear
+        </button>
+    </div>
+
+    <div class="output">
+        <div class="output-header">
+            <h3>
+                <i class="fas fa-terminal"></i>
+                Output:
+                <span class="status secure">Secure</span>
+            </h3>
+            <button class="copy-btn" onclick="copyOutput()">
+                <i class="fas fa-copy"></i>
+                Copy
+            </button>
+        </div>
+        <div id="result">No output yet. Select a demo and enter input to see results.</div>
+    </div>
+</div>
+
+<script>
+    // Demo card selection
+    const demoCards = document.querySelectorAll('.demo-card');
+    const demoSelect = document.getElementById('demo');
+    
+    demoCards.forEach(card => {
+        card.addEventListener('click', () => {
+            // Remove active class from all cards
+            demoCards.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked card
+            card.classList.add('active');
+            
+            // Update select element
+            demoSelect.value = card.getAttribute('data-value');
+        });
+    });
+    
+    // Update cards when select changes
+    demoSelect.addEventListener('change', () => {
+        demoCards.forEach(card => {
+            if (card.getAttribute('data-value') === demoSelect.value) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+    });
+
+    async function runDemo() {
+        const demo = document.getElementById("demo").value;
+        const input = document.getElementById("userInput").value;
+
+        // Show loading state
+        document.getElementById("result").innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Processing your request...</span>
+            </div>
+        `;
+
+        try {
+            const response = await fetch("/run_demo", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ demo, input })
+            });
+
+            const data = await response.json();
+
+            // Update status indicator
+            const statusEl = document.querySelector('.status');
+            if (data.status === 'vulnerable') {
+                statusEl.textContent = 'Vulnerable';
+                statusEl.className = 'status vulnerable';
+            } else {
+                statusEl.textContent = 'Secure';
+                statusEl.className = 'status secure';
+            }
+
+            // If returned output is an object → pretty print
+            if (typeof data.output === "object") {
+                document.getElementById("result").innerText =
+                    JSON.stringify(data.output, null, 2);
+            } 
+            else {
+                // IMPORTANT: Allow unsafe HTML for XSS demo
+                document.getElementById("result").innerHTML = data.output;
+            }
+
+        } catch (error) {
+            document.getElementById("result").innerHTML = `
+                <div style="color: var(--danger); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Error connecting to server.
+                </div>
+            `;
+        }
+    }
+
+    function clearInput() {
+        document.getElementById("userInput").value = "";
+        document.getElementById("result").innerText = "No output yet. Select a demo and enter input to see results.";
+        
+        // Reset status
+        const statusEl = document.querySelector('.status');
+        statusEl.textContent = 'Secure';
+        statusEl.className = 'status secure';
+    }
+
+    function copyOutput() {
+        const resultText = document.getElementById("result").innerText;
+        navigator.clipboard.writeText(resultText).then(() => {
+            // Show temporary feedback
+            const copyBtn = document.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>

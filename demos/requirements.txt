@@ -1,0 +1,9 @@
+openai
+transformers
+torch
+requests
+flask
+flask-cors
+time
+re
+json
