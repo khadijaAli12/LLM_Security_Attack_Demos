@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Testing - LLM Security Testing{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>🧪 Security Testing Configuration</h2>
+    <div class="alert alert-info">
+        <strong>⚠️ Before Starting:</strong> Generate dataset first. ChatGPT/Gemini require login.
+    </div>
+</div>
+
+<div class="card">
+    <h2>🤖 Select LLMs to Test</h2>
+    <div style="margin-bottom: 15px;">
+        <button type="button" class="btn" onclick="selectPublicOnly()" style="margin-right: 10px;">
+            ✅ Select Public Only (No Login)
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="selectAll()">
+            Select All
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="deselectAll()">
+            Deselect All
+        </button>
+    </div>
+    <div class="checkbox-group">
+        <label class="checkbox-item" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+            <input type="checkbox" name="llm" value="chatgpt">
+            <div><strong>ChatGPT</strong><br><small style="color: #856404;">⚠️ Requires OpenAI login</small></div>
+        </label>
+        <label class="checkbox-item" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+            <input type="checkbox" name="llm" value="gemini">
+            <div><strong>Gemini</strong><br><small style="color: #856404;">⚠️ Requires Google login</small></div>
+        </label>
+        <label class="checkbox-item" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+            <input type="checkbox" name="llm" value="deepseek">
+            <div><strong>DeepSeek</strong><br><small style="color: #856404;">⚠️ Requires login (email/Google)</small></div>
+        </label>
+        <label class="checkbox-item" style="background: #d4edda; border-left: 4px solid #28a745;">
+            <input type="checkbox" name="llm" value="qwen" checked>
+            <div><strong>QWEN</strong><br><small style="color: #155724;">✓ No login required</small></div>
+        </label>
+        <label class="checkbox-item" style="background: #d4edda; border-left: 4px solid #28a745;">
+            <input type="checkbox" name="llm" value="llama" checked>
+            <div><strong>Llama</strong><br><small style="color: #155724;">✓ No login required</small></div>
+        </label>
+    </div>
+</div>
+
+<div class="card">
+    <h2>⚙️ Configuration</h2>
+    <label>Prompts per Category:</label>
+    <select id="prompts-per-category">
+        <option value="1">1 (Quick - 5-10 min)</option>
+        <option value="2" selected>2 (Recommended - 10-20 min)</option>
+        <option value="3">3 (Full - 20-40 min)</option>
+    </select>
+    <button class="btn" onclick="startTesting()" id="start-btn">🚀 Start Testing</button>
+</div>
+
+<div id="progress-section" class="card hidden">
+    <h2>📊 Testing Progress</h2>
+    <div id="progress-info">
+        <p><strong>Status:</strong> <span id="status-text">Running...</span></p>
+        <p><strong>Current:</strong> <span id="current-info">-</span></p>
+    </div>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%;">0%</div>
+    </div>
+    <p id="progress-count" style="text-align: center;">0 / 0 tests</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectPublicOnly() {
+    // Uncheck login required models
+    document.querySelector('input[value="chatgpt"]').checked = false;
+    document.querySelector('input[value="gemini"]').checked = false;
+    document.querySelector('input[value="deepseek"]').checked = false;
+    // Check only truly public models (HuggingFace spaces)
+    document.querySelector('input[value="qwen"]').checked = true;
+    document.querySelector('input[value="llama"]').checked = true;
+    showAlert('Selected only public models (QWEN & Llama - no login required)', 'success');
+}
+
+function selectAll() {
+    document.querySelectorAll('input[name="llm"]').forEach(cb => cb.checked = true);
+    showAlert('Selected all models', 'info');
+}
+
+function deselectAll() {
+    document.querySelectorAll('input[name="llm"]').forEach(cb => cb.checked = false);
+    showAlert('Deselected all models', 'info');
+}
+
+function startTesting() {
+    const selectedLLMs = Array.from(document.querySelectorAll('input[name="llm"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedLLMs.length === 0) {
+        showAlert('Please select at least one LLM', 'error');
+        return;
+    }
+
+    const promptsPerCategory = document.getElementById('prompts-per-category').value;
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('progress-section').classList.remove('hidden');
+
+    fetch('/api/start-test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            llms: selectedLLMs,
+            prompts_per_category: parseInt(promptsPerCategory)
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            startProgressTracking();
+        } else {
+            showAlert('Error: ' + data.error, 'error');
+            document.getElementById('start-btn').disabled = false;
+        }
+    });
+}
+
+let progressInterval;
+function startProgressTracking() {
+    progressInterval = setInterval(() => {
+        fetch('/api/test-progress')
+        .then(res => res.json())
+        .then(data => {
+            const percentage = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
+            document.getElementById('progress-fill').style.width = percentage + '%';
+            document.getElementById('progress-fill').textContent = percentage + '%';
+            document.getElementById('progress-count').textContent = `${data.current} / ${data.total} tests`;
+            document.getElementById('current-info').textContent = `${data.current_llm} - ${data.current_category}`;
+            
+            if (!data.running && data.status === 'completed') {
+                clearInterval(progressInterval);
+                showAlert('Testing complete!', 'success');
+                document.getElementById('start-btn').disabled = false;
+            }
+        });
+    }, 2000);
+}
+</script>
+{% endblock %}

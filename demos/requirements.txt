@@ -4,6 +4,11 @@ torch
 requests
 flask
 flask-cors
+selenium
+webdriver-manager
+pandas
+matplotlib
+seaborn
 time
 re
 json

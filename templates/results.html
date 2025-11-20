@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Results - LLM Security Testing{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>📊 Test Results</h2>
+    <button class="btn" onclick="loadResults()">🔄 Load Results</button>
+    <button class="btn btn-secondary" onclick="generateReport()">📄 Generate Report</button>
+    <button class="btn btn-success" onclick="loadCategoryAnalysis()">🎯 Category Analysis</button>
+    
+    <div id="results-content" style="margin-top: 20px;">
+        <p style="color: #718096; text-align: center; padding: 40px;">
+            Click "Load Results" to view test results
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadResults() {
+    const contentDiv = document.getElementById('results-content');
+    contentDiv.innerHTML = '<div class="spinner"></div>';
+    
+    fetch('/api/security-metrics')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<h3>🏆 Security Rankings</h3><table>';
+            html += '<thead><tr><th>Rank</th><th>LLM</th><th>Security Score</th><th>Status</th></tr></thead><tbody>';
+            
+            const sorted = Object.entries(data.metrics).sort((a, b) => 
+                b[1].security_score - a[1].security_score
+            );
+            
+            sorted.forEach(([llm, metrics], idx) => {
+                const rank = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
+                const status = metrics.security_score >= 90 ? 'Excellent' : 
+                             metrics.security_score >= 70 ? 'Good' : 
+                             metrics.security_score >= 50 ? 'Moderate' : 'Vulnerable';
+                const badgeClass = (status === 'Excellent' || status === 'Good') ? 'success' : 
+                                  status === 'Moderate' ? 'warning' : 'danger';
+                
+                html += `<tr>
+                    <td>${rank}</td>
+                    <td><strong>${llm}</strong></td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${metrics.security_score}%;">
+                                ${metrics.security_score}%
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge badge-${badgeClass}">${status}</span></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            
+            html += '<h3 style="margin-top: 30px;">📊 Detailed Metrics</h3><table>';
+            html += '<thead><tr><th>LLM</th><th>Total</th><th>Refusals</th><th>Compliances</th><th>Vulnerability</th></tr></thead><tbody>';
+            
+            sorted.forEach(([llm, metrics]) => {
+                html += `<tr>
+                    <td><strong>${llm}</strong></td>
+                    <td>${metrics.total_tests}</td>
+                    <td><span class="badge badge-success">${metrics.refusals}</span></td>
+                    <td><span class="badge badge-danger">${metrics.compliances}</span></td>
+                    <td>${metrics.vulnerability_rate}%</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            contentDiv.innerHTML = html;
+        } else {
+            contentDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+        }
+    })
+    .catch(err => {
+        contentDiv.innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+    });
+}
+
+function loadCategoryAnalysis() {
+    const contentDiv = document.getElementById('results-content');
+    contentDiv.innerHTML = '<div class="spinner"></div>';
+    
+    fetch('/api/category-analysis')
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            let html = '<h3>🎯 Refusal Rate by Attack Category</h3>';
+            html += '<p style="color: #718096;">Higher = Better (more refusals)</p>';
+            html += '<table><thead><tr><th>Category</th>';
+            
+            const llms = new Set();
+            Object.values(data.analysis).forEach(catData => {
+                Object.keys(catData).forEach(llm => llms.add(llm));
+            });
+            
+            llms.forEach(llm => html += `<th>${llm}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            Object.entries(data.analysis).forEach(([category, llmData]) => {
+                html += `<tr><td><strong>${category.replace(/_/g, ' ')}</strong></td>`;
+                llms.forEach(llm => {
+                    const rate = llmData[llm] || 0;
+                    const color = rate >= 80 ? '#c6f6d5' : rate >= 50 ? '#feebc8' : '#fed7d7';
+                    html += `<td style="background: ${color}; font-weight: bold;">${rate}%</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            contentDiv.innerHTML = html;
+        } else {
+            contentDiv.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+        }
+    });
+}
+
+function generateReport() {
+    showAlert('Generating report...', 'info');
+    fetch('/api/generate-report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Report generated successfully! Check project folder.', 'success');
+        } else {
+            showAlert('Error: ' + data.error, 'error');
+        }
+    });
+}
+</script>
+{% endblock %}
