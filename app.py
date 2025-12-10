@@ -42,7 +42,7 @@ Flask Web Application for LLM Security Testing
 Provides web interface for testing and viewing results
 """
 
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, url_for, Response
 import pandas as pd
 import json
 import os
@@ -54,8 +54,11 @@ import time
 from malicious_prompts_dataset import get_all_prompts, malicious_prompts, save_dataset_to_csv
 from llm_security_tester import LLMSecurityTester
 from security_report_generator import SecurityReportGenerator
+from utils.ollama_client import OllamaClient
 
-app = Flask(__name__)
+import json
+
+app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SECRET_KEY'] = 'llm-security-testing-2024'
 
 # Global variables for tracking test progress
@@ -74,6 +77,42 @@ test_results = []
 def index():
     """Home page"""
     return render_template('index.html')
+
+@app.route('/prompt-interface')
+def prompt_interface():
+    """Prompt interface page"""
+    return render_template('prompt_interface.html')
+
+@app.route('/api/send-prompt', methods=['POST'])
+def send_prompt():
+    """Send prompt to LLM and get response"""
+    try:
+        data = request.json
+        prompt = data.get('prompt', '')
+        model = data.get('model', 'llama3.1:latest')
+        
+        if not prompt:
+            return jsonify({
+                'success': False,
+                'error': 'No prompt provided'
+            })
+        
+        # Initialize Ollama client
+        client = OllamaClient()
+        
+        # Get response from model
+        response = client.generate_response(prompt, model)
+        
+        return jsonify({
+            'success': True,
+            'response': response,
+            'model': model
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/dataset')
 def dataset():
@@ -106,6 +145,36 @@ def api_dataset():
             'error': 'Dataset not found. Generate it first.'
         })
 
+@app.route('/api/prompts/<category>')
+def api_prompts_by_category(category):
+    """API endpoint to get prompts by category"""
+    try:
+        # Use the function from our dataset module
+        from malicious_prompts_dataset import load_prompts_from_file, malicious_prompts
+        
+        # Find the file for this category
+        filename = malicious_prompts.get(category)
+        if not filename:
+            return jsonify({
+                'success': False,
+                'error': f'Category "{category}" not found'
+            })
+        
+        # Load prompts from file
+        prompts = load_prompts_from_file(filename)
+        
+        return jsonify({
+            'success': True,
+            'prompts': prompts,
+            'category': category,
+            'count': len(prompts)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 @app.route('/api/generate-dataset', methods=['POST'])
 def generate_dataset():
     """Generate the malicious prompts dataset"""
@@ -120,135 +189,6 @@ def generate_dataset():
             'success': False,
             'error': str(e)
         })
-
-@app.route('/testing')
-def testing():
-    """Testing page"""
-    return render_template('testing.html')
-
-@app.route('/api/start-test', methods=['POST'])
-def start_test():
-    """Start security testing"""
-    global test_progress, test_results
-    
-    if test_progress['running']:
-        return jsonify({
-            'success': False,
-            'error': 'Test already running'
-        })
-    
-    data = request.json
-    selected_llms = data.get('llms', [])
-    prompts_per_category = data.get('prompts_per_category', 2)
-    
-    # Configure models
-    models_map = {
-        'chatgpt': {'type': 'chatgpt', 'name': 'ChatGPT'},
-        'gemini': {'type': 'gemini', 'name': 'Gemini'},
-        'deepseek': {'type': 'deepseek', 'name': 'DeepSeek'},
-        'qwen': {
-            'type': 'huggingface',
-            'name': 'QWEN',
-            'url': 'https://huggingface.co/spaces/Qwen/Qwen2.5-72B-Instruct'
-        },
-        'llama': {
-            'type': 'huggingface',
-            'name': 'Llama',
-            'url': 'https://huggingface.co/spaces/meta-llama/Llama-3.2-90B-Vision-Instruct'
-        }
-    }
-    
-    models = [models_map[llm] for llm in selected_llms if llm in models_map]
-    
-    if not models:
-        return jsonify({
-            'success': False,
-            'error': 'No valid LLMs selected'
-        })
-    
-    # Prepare prompts
-    all_prompts = get_all_prompts()
-    df_prompts = pd.DataFrame(all_prompts)
-    sampled = df_prompts.groupby('category').head(prompts_per_category)
-    test_prompts = sampled.to_dict('records')
-    
-    # Reset progress
-    test_progress = {
-        'running': True,
-        'current': 0,
-        'total': len(test_prompts) * len(models),
-        'status': 'running',
-        'current_llm': '',
-        'current_category': ''
-    }
-    test_results = []
-    
-    # Run tests in background thread
-    thread = threading.Thread(target=run_tests_background, args=(test_prompts, models))
-    thread.daemon = True
-    thread.start()
-    
-    return jsonify({
-        'success': True,
-        'message': f'Started testing {len(test_prompts)} prompts across {len(models)} models'
-    })
-
-def run_tests_background(test_prompts, models):
-    """Run tests in background"""
-    global test_progress, test_results
-    
-    tester = LLMSecurityTester(headless=False)
-    
-    for idx, prompt_data in enumerate(test_prompts):
-        prompt = prompt_data['prompt']
-        category = prompt_data['category']
-        
-        for model_config in models:
-            test_progress['current_llm'] = model_config['name']
-            test_progress['current_category'] = category
-            
-            tester.setup_driver()
-            
-            try:
-                if model_config['type'] == 'chatgpt':
-                    result = tester.test_chatgpt(prompt)
-                elif model_config['type'] == 'gemini':
-                    result = tester.test_gemini(prompt)
-                elif model_config['type'] == 'deepseek':
-                    result = tester.test_deepseek(prompt)
-                elif model_config['type'] == 'huggingface':
-                    result = tester.test_huggingface_model(
-                        prompt,
-                        model_config['url'],
-                        model_config['name']
-                    )
-                
-                result['category'] = category
-                result['prompt'] = prompt
-                result['timestamp'] = datetime.now().isoformat()
-                
-                test_results.append(result)
-                test_progress['current'] += 1
-                
-            except Exception as e:
-                print(f"Error testing {model_config['name']}: {str(e)}")
-                test_progress['current'] += 1
-            
-            finally:
-                tester.close_driver()
-                time.sleep(2)
-    
-    # Save results
-    tester.results = test_results
-    tester.save_results()
-    
-    test_progress['running'] = False
-    test_progress['status'] = 'completed'
-
-@app.route('/api/test-progress')
-def test_progress_api():
-    """Get current test progress"""
-    return jsonify(test_progress)
 
 @app.route('/results')
 def results():
@@ -382,16 +322,56 @@ def category_analysis():
             'error': 'No results found'
         })
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    """Download generated files"""
+@app.route('/comprehensive-results')
+def comprehensive_results_page():
+    """Comprehensive attack results page"""
+    return render_template('comprehensive_results.html')
+
+@app.route('/api/comprehensive-results')
+def comprehensive_results():
+    """API endpoint for comprehensive attack results"""
     try:
-        return send_file(filename, as_attachment=True)
+        with open('comprehensive_attack_results.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({
+            'success': True,
+            'data': data
+        })
+    except FileNotFoundError:
+        return jsonify({
+            'success': False,
+            'error': 'No comprehensive results found. Run comprehensive tests first.'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error loading comprehensive results: {str(e)}'
+        })
+
+@app.route('/download/<filetype>/<filename>')
+def download_file(filetype, filename):
+    """Download generated files in different formats"""
+    try:
+        if filetype == 'csv':
+            # Original CSV download
+            return send_file(filename, as_attachment=True)
+        else:
+            return jsonify({'success': False, 'error': 'Unsupported file type. Only CSV downloads are supported.'}), 400
     except FileNotFoundError:
         return jsonify({
             'success': False,
             'error': 'File not found'
         }), 404
+
+
+
+
+
+
+
+def generate_pdf_report():
+    """Removed PDF generation functionality"""
+    return jsonify({'success': False, 'error': 'PDF functionality has been removed'}), 400
 
 if __name__ == '__main__':
     print("\n" + "="*60)

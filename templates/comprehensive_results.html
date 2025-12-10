@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Attack Results - LLM Security Testing</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f7fafc;
+        }
+        .vulnerable {
+            background-color: #fee2e2;
+            color: #991b1b;
+            font-weight: bold;
+        }
+        .safe {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .error {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .filter-controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-controls select, .filter-controls input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+        .pagination button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🎯 Comprehensive Attack Results</h1>
+        <p>Detailed view of all security test executions</p>
+    </header>
+
+    <a href="/" class="back-link">← Back to Dashboard</a>
+
+    <div class="card">
+        <h2>Filter Results</h2>
+        <div class="filter-controls">
+            <select id="category-filter">
+                <option value="">All Categories</option>
+                <!-- Categories will be populated by JavaScript -->
+            </select>
+            <select id="vulnerability-filter">
+                <option value="">All Statuses</option>
+                <option value="vulnerable">Vulnerable</option>
+                <option value="safe">Safe</option>
+                <option value="error">Error</option>
+            </select>
+            <input type="text" id="search-input" placeholder="Search prompts or responses...">
+            <button id="apply-filters" class="btn">Apply Filters</button>
+            <button id="clear-filters" class="btn">Clear</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Attack Results</h2>
+        <div id="results-summary">
+            <p>Loading results...</p>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Attack Type</th>
+                    <th>Category</th>
+                    <th>Prompt</th>
+                    <th>Response</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+                <!-- Results will be populated by JavaScript -->
+            </tbody>
+        </table>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allResults = [];
+        let filteredResults = [];
+        let currentPage = 1;
+        const resultsPerPage = 20;
+        
+        // Load comprehensive attack results
+        async function loadComprehensiveResults() {
+            try {
+                const response = await fetch('/api/comprehensive-results');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Flatten the results array
+                    allResults = data.data.flat();
+                    filteredResults = [...allResults];
+                    
+                    // Populate category filter
+                    populateCategoryFilter();
+                    
+                    // Display results
+                    displayResults();
+                    
+                    // Update summary
+                    document.getElementById('results-summary').innerHTML = 
+                        `<p>Showing ${allResults.length} total results</p>`;
+                } else {
+                    document.getElementById('results-summary').innerHTML = 
+                        `<p>Error loading results: ${data.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('results-summary').innerHTML = 
+                    `<p>Error loading results: ${error.message}</p>`;
+            }
+        }
+        
+        // Populate category filter dropdown
+        function populateCategoryFilter() {
+            const categories = [...new Set(allResults.map(result => result.attack_type))];
+            const select = document.getElementById('category-filter');
+            
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="">All Categories</option>';
+            
+            // Add categories
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        }
+        
+        // Apply filters
+        function applyFilters() {
+            const categoryFilter = document.getElementById('category-filter').value;
+            const vulnerabilityFilter = document.getElementById('vulnerability-filter').value;
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredResults = allResults.filter(result => {
+                // Category filter
+                if (categoryFilter && result.attack_type !== categoryFilter) {
+                    return false;
+                }
+                
+                // Vulnerability filter
+                if (vulnerabilityFilter) {
+                    if (vulnerabilityFilter === 'vulnerable' && !result.vulnerable) {
+                        return false;
+                    }
+                    if (vulnerabilityFilter === 'safe' && result.vulnerable) {
+                        return false;
+                    }
+                    if (vulnerabilityFilter === 'error' && !result.response.startsWith('Error:')) {
+                        return false;
+                    }
+                }
+                
+                // Search filter
+                if (searchInput) {
+                    const promptMatch = result.prompt.toLowerCase().includes(searchInput);
+                    const responseMatch = result.response.toLowerCase().includes(searchInput);
+                    if (!promptMatch && !responseMatch) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            displayResults();
+        }
+        
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('category-filter').value = '';
+            document.getElementById('vulnerability-filter').value = '';
+            document.getElementById('search-input').value = '';
+            filteredResults = [...allResults];
+            currentPage = 1;
+            displayResults();
+        }
+        
+        // Display results with pagination
+        function displayResults() {
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = startIndex + resultsPerPage;
+            const pageResults = filteredResults.slice(startIndex, endIndex);
+            
+            const tbody = document.getElementById('results-table-body');
+            tbody.innerHTML = '';
+            
+            if (pageResults.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6" style="text-align: center;">No results found</td>';
+                tbody.appendChild(row);
+            } else {
+                pageResults.forEach(result => {
+                    const row = document.createElement('tr');
+                    
+                    // Determine status and class
+                    let statusText = 'Safe';
+                    let statusClass = 'safe';
+                    if (result.vulnerable) {
+                        statusText = 'Vulnerable';
+                        statusClass = 'vulnerable';
+                    } else if (result.response.startsWith('Error:')) {
+                        statusText = 'Error';
+                        statusClass = 'error';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${result.attack_type}</td>
+                        <td>${result.category || result.attack_type}</td>
+                        <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
+                        <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td>-</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // Update pagination
+            updatePagination();
+        }
+        
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayResults();
+                }
+            });
+            pagination.appendChild(prevButton);
+            
+            // Page buttons
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.classList.toggle('active', i === currentPage);
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        displayResults();
+                    });
+                    pagination.appendChild(pageButton);
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    const ellipsis = document.createElement('button');
+                    ellipsis.textContent = '...';
+                    ellipsis.disabled = true;
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayResults();
+                }
+            });
+            pagination.appendChild(nextButton);
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComprehensiveResults();
+            
+            document.getElementById('apply-filters').addEventListener('click', applyFilters);
+            document.getElementById('clear-filters').addEventListener('click', clearFilters);
+        });
+    </script>
+</body>
+</html>

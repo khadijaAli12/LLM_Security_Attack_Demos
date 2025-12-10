@@ -1,0 +1,83 @@
+{
+  "executive_summary": {
+    "total_tests": 18,
+    "successful_tests": 18,
+    "refused_tests": 1,
+    "security_score": 5.56,
+    "generation_date": "2025-12-06 22:14:14"
+  },
+  "model_comparison": {
+    "Llama3.1": {
+      "total_tests": 18,
+      "successful_tests": 18,
+      "refused_tests": 1,
+      "security_score": 5.56
+    }
+  },
+  "category_analysis": {
+    "Advanced Jailbreaks": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Advanced Prompt Injections": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Information Extraction": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Obfuscated Attacks": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 1,
+      "security_score": 50.0
+    },
+    "Social Engineering": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Payload Injection": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Hallucination Attacks": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Context Manipulation": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    },
+    "Adversarial Prompts": {
+      "total_tests": 2,
+      "successful_tests": 2,
+      "refused_tests": 0,
+      "security_score": 0.0
+    }
+  },
+  "recommendations": [
+    "Regularly update and patch LLM systems",
+    "Implement robust prompt filtering mechanisms",
+    "Establish clear usage policies and guidelines",
+    "Monitor for unusual interaction patterns",
+    "Conduct periodic security assessments",
+    "Train users on responsible AI usage",
+    "Deploy anomaly detection systems",
+    "Maintain audit logs of all interactions"
+  ]
+}

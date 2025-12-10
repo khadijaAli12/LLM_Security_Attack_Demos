@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results - LLM Security Testing</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #718096;
+            margin-top: 5px;
+        }
+        .chart-container {
+            height: 400px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f7fafc;
+        }
+        .download-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .vulnerable {
+            background-color: #fee2e2;
+            color: #991b1b;
+            font-weight: bold;
+        }
+        .safe {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 Test Results</h1>
+        <p>View detailed test results and security metrics</p>
+    </header>
+
+    <a href="/" class="back-link">← Back to Dashboard</a>
+
+    <div class="card">
+        <div class="tabs">
+            <div class="tab active" data-tab="summary">Summary</div>
+            <div class="tab" data-tab="detailed">Detailed Results</div>
+            <div class="tab" data-tab="comprehensive">Comprehensive Attack Results</div>
+        </div>
+
+        <div id="summary-tab" class="tab-content active">
+            {% if data.has_results %}
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ data.summary.total_tests }}</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ data.summary.llms_tested }}</div>
+                    <div class="stat-label">LLMs Tested</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ data.summary.categories }}</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+            </div>
+            
+            <h3>Security Scores by Model</h3>
+            <div class="chart-container">
+                <canvas id="security-scores-chart"></canvas>
+            </div>
+            
+            <h3>Detailed Metrics</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Total Tests</th>
+                        <th>Successful</th>
+                        <th>Refusals</th>
+                        <th>Compliances</th>
+                        <th>Security Score</th>
+                        <th>Vulnerability Rate</th>
+                    </tr>
+                </thead>
+                <tbody id="metrics-table-body">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="download-buttons">
+                <button id="generate-report-btn" class="btn">Generate Full Report</button>
+                <button id="download-csv-btn" class="btn">Download CSV</button>
+                <!-- Removed PDF download button -->
+            </div>
+            {% else %}
+            <p>No test results found. Run security tests first.</p>
+            {% endif %}
+        </div>
+
+        <div id="detailed-tab" class="tab-content">
+            <h3>Detailed Test Results</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Category</th>
+                        <th>Prompt</th>
+                        <th>Response</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="detailed-results-table">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="comprehensive-tab" class="tab-content">
+            <h3>Comprehensive Attack Results</h3>
+            <div id="comprehensive-results-content">
+                <!-- Comprehensive results will be loaded here -->
+                <p>Loading comprehensive attack results...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const tabName = tab.getAttribute('data-tab');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Load detailed metrics
+        async function loadMetrics() {
+            try {
+                const response = await fetch('/api/security-metrics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('metrics-table-body');
+                    tbody.innerHTML = '';
+                    
+                    for (const [model, metrics] of Object.entries(data.metrics)) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${model}</td>
+                            <td>${metrics.total_tests}</td>
+                            <td>${metrics.successful_tests}</td>
+                            <td>${metrics.refusals}</td>
+                            <td>${metrics.compliances}</td>
+                            <td>${metrics.security_score}%</td>
+                            <td>${metrics.vulnerability_rate}%</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+            }
+        }
+        
+        // Load detailed results
+        async function loadDetailedResults() {
+            try {
+                const response = await fetch('/api/results');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('detailed-results-table');
+                    tbody.innerHTML = '';
+                    
+                    data.data.forEach(result => {
+                        const row = document.createElement('tr');
+                        const statusClass = result.refused ? 'safe' : (result.success ? '' : 'vulnerable');
+                        const statusText = result.refused ? 'Refused' : (result.success ? 'Compliant' : 'Error');
+                        
+                        row.innerHTML = `
+                            <td>${result.llm}</td>
+                            <td>${result.category}</td>
+                            <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
+                            <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
+                            <td class="${statusClass}">${statusText}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading detailed results:', error);
+            }
+        }
+        
+        // Load comprehensive attack results
+        async function loadComprehensiveResults() {
+            try {
+                const response = await fetch('/api/comprehensive-results');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('comprehensive-results-content');
+                    container.innerHTML = '';
+                    
+                    // Create a table for comprehensive results
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Attack Type</th>
+                                <th>Prompt</th>
+                                <th>Response</th>
+                                <th>Vulnerable</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comprehensive-results-body"></tbody>
+                    `;
+                    
+                    container.appendChild(table);
+                    const tbody = document.getElementById('comprehensive-results-body');
+                    
+                    // Flatten the results array
+                    const allResults = data.data.flat();
+                    
+                    allResults.forEach(result => {
+                        const row = document.createElement('tr');
+                        const vulnerableClass = result.vulnerable ? 'vulnerable' : 'safe';
+                        const vulnerableText = result.vulnerable ? 'Yes' : 'No';
+                        
+                        row.innerHTML = `
+                            <td>${result.attack_type}</td>
+                            <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
+                            <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
+                            <td class="${vulnerableClass}">${vulnerableText}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    document.getElementById('comprehensive-results-content').innerHTML = '<p>Error loading comprehensive results: ' + data.error + '</p>';
+                }
+            } catch (error) {
+                document.getElementById('comprehensive-results-content').innerHTML = '<p>Error loading comprehensive results: ' + error.message + '</p>';
+            }
+        }
+        
+        // Generate report
+        document.getElementById('generate-report-btn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('generate-report-btn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch('/api/generate-report', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Report generated successfully!');
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`Network error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Full Report';
+            }
+        });
+        
+        // Download CSV
+        document.getElementById('download-csv-btn')?.addEventListener('click', () => {
+            window.location.href = '/download/csv/security_test_results.csv';
+        });
+        
+        // Load all data when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMetrics();
+            loadDetailedResults();
+            loadComprehensiveResults();
+        });
+    </script>
+</body>
+</html>

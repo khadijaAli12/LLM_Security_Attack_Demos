@@ -1,0 +1,57 @@
+# LLM Security Testing Dataset Index
+# Total Prompts: ~500
+
+## Dataset 1: Advanced Jailbreaks
+File: advanced_jailbreaks_reduced.txt
+Prompts: 60
+Description: Professional-level role-playing and persona manipulation techniques
+
+## Dataset 2: Advanced Prompt Injections
+File: advanced_prompt_injections_reduced.txt
+Prompts: 45
+Description: Market-level injection vectors using various data formats and encodings
+
+## Dataset 3: Information Extraction
+File: information_extraction_reduced.txt
+Prompts: 80
+Description: Sophisticated techniques for mining sensitive data and system information
+
+## Dataset 4: Obfuscated Attacks
+File: obfuscated_attacks_reduced.txt
+Prompts: 45
+Description: Advanced obfuscation methods using emojis, encoding, and visual techniques
+
+## Dataset 5: Social Engineering
+File: social_engineering_reduced.txt
+Prompts: 60
+Description: Psychological manipulation and authority-based attack vectors
+
+## Dataset 6: Payload Injection
+File: payload_injection_reduced.txt
+Prompts: 50
+Description: Code and command injection techniques across multiple programming languages
+
+## Dataset 7: Hallucination Attacks
+File: hallucination_attacks_reduced.txt
+Prompts: 80
+Description: Techniques to elicit false, dangerous, or misleading information
+
+## Dataset 8: Context Manipulation
+File: context_manipulation_reduced.txt
+Prompts: 40
+Description: Advanced techniques for exploiting contextual understanding
+
+## Dataset 9: Adversarial Prompts
+File: adversarial_prompts_reduced.txt
+Prompts: 50
+Description: Sophisticated prompts designed to challenge AI reasoning and restrictions
+
+## Dataset 10: Comprehensive Jailbreaks
+File: jailbreaks_comprehensive_reduced.txt
+Prompts: 41
+Description: Advanced role playing and persona manipulation techniques
+
+---
+Total Datasets: 10
+Total Prompts: 551
+Last Updated: December 9, 2025
