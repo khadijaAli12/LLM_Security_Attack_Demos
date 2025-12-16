@@ -3,243 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Results - LLM Security Testing</title>
+    <title>Security Test Results</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/charts.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f7fa;
-            color: #333;
+        :root {
+            --bg-dark: #121826;
+            --bg-card: #1e293b;
+            --bg-light: #2d3748;
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
         }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
+        
+        * {
             margin: 0;
-            font-size: 2.5em;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
         }
-        .card h2 {
-            margin-top: 0;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 10px;
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-card {
-            background: #f7fafc;
-            border-radius: 8px;
-            padding: 15px;
+        
+        header {
+            background: linear-gradient(135deg, var(--bg-card), #0f172a);
+            padding: 2rem 0;
             text-align: center;
+            border-bottom: 1px solid var(--border);
         }
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
-        .stat-label {
-            color: #718096;
-            margin-top: 5px;
+        
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
         }
-        .chart-container {
-            height: 400px;
-            margin: 20px 0;
-        }
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.2s;
-            margin: 5px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-        .btn:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
-        }
+        
         .back-link {
             display: inline-block;
-            margin-bottom: 20px;
-            color: #667eea;
+            margin: 1.5rem 0;
+            color: var(--primary);
             text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
+        
         .back-link:hover {
-            text-decoration: underline;
+            background-color: rgba(79, 70, 229, 0.1);
         }
+        
+        .panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-header {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .stat-card {
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            height: 350px;
+            margin: 2rem 0;
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin: 0.3rem;
+        }
+        
+        button:hover {
+            background: var(--primary-light);
+        }
+        
+        button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 1.5rem 0;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed; /* Add this to control column widths */
         }
+        
         th, td {
-            padding: 12px;
+            padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top; /* Align content to top */
+            word-wrap: break-word; /* Ensure text wraps properly */
         }
+        
         th {
-            background-color: #f7fafc;
+            background: var(--bg-light);
             font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
         tr:hover {
-            background-color: #f7fafc;
+            background-color: rgba(79, 70, 229, 0.05);
         }
-        .download-buttons {
-            margin: 20px 0;
-            text-align: center;
-        }
+        
         .vulnerable {
-            background-color: #fee2e2;
-            color: #991b1b;
-            font-weight: bold;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
         }
+        
         .safe {
-            background-color: #dcfce7;
-            color: #166534;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
         }
+        
         .tabs {
             display: flex;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
         }
+        
         .tab {
-            padding: 10px 20px;
-            background: #e2e8f0;
+            padding: 0.8rem 1.5rem;
+            background: transparent;
             cursor: pointer;
-            border-radius: 5px 5px 0 0;
-            margin-right: 5px;
+            border: none;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
         }
+        
         .tab.active {
-            background: #667eea;
-            color: white;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
         }
+        
         .tab-content {
             display: none;
         }
+        
         .tab-content.active {
             display: block;
+        }
+        
+        .improvement-positive {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .improvement-negative {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .filter-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1.2rem;
+            background: var(--bg-light);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .filter-group select, .filter-group input {
+            padding: 0.7rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+        }
+        
+        .controls-center {
+            text-align: center;
+            margin: 1rem 0;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>📊 Test Results</h1>
-        <p>View detailed test results and security metrics</p>
+        <div class="container">
+            <h1>Security Test Results</h1>
+            <p>Before/After Comparison Analysis</p>
+        </div>
     </header>
-
-    <a href="/" class="back-link">← Back to Dashboard</a>
-
-    <div class="card">
-        <div class="tabs">
-            <div class="tab active" data-tab="summary">Summary</div>
-            <div class="tab" data-tab="detailed">Detailed Results</div>
-            <div class="tab" data-tab="comprehensive">Comprehensive Attack Results</div>
-        </div>
-
-        <div id="summary-tab" class="tab-content active">
-            {% if data.has_results %}
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value">{{ data.summary.total_tests }}</div>
-                    <div class="stat-label">Total Tests</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ data.summary.llms_tested }}</div>
-                    <div class="stat-label">LLMs Tested</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ data.summary.categories }}</div>
-                    <div class="stat-label">Categories</div>
-                </div>
+    
+    <div class="container">
+        <a href="/" class="back-link">← Dashboard</a>
+        
+        <div class="panel">
+            <h2 class="panel-header">Security Comparison</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="comparison">Comparison Results</div>
             </div>
             
-            <h3>Security Scores by Model</h3>
-            <div class="chart-container">
-                <canvas id="security-scores-chart"></canvas>
-            </div>
-            
-            <h3>Detailed Metrics</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Total Tests</th>
-                        <th>Successful</th>
-                        <th>Refusals</th>
-                        <th>Compliances</th>
-                        <th>Security Score</th>
-                        <th>Vulnerability Rate</th>
-                    </tr>
-                </thead>
-                <tbody id="metrics-table-body">
-                    <!-- Data will be populated by JavaScript -->
-                </tbody>
-            </table>
-            
-            <div class="download-buttons">
-                <button id="generate-report-btn" class="btn">Generate Full Report</button>
-                <button id="download-csv-btn" class="btn">Download CSV</button>
-                <!-- Removed PDF download button -->
-            </div>
-            {% else %}
-            <p>No test results found. Run security tests first.</p>
-            {% endif %}
-        </div>
-
-        <div id="detailed-tab" class="tab-content">
-            <h3>Detailed Test Results</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Category</th>
-                        <th>Prompt</th>
-                        <th>Response</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="detailed-results-table">
-                    <!-- Data will be populated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-
-        <div id="comprehensive-tab" class="tab-content">
-            <h3>Comprehensive Attack Results</h3>
-            <div id="comprehensive-results-content">
-                <!-- Comprehensive results will be loaded here -->
-                <p>Loading comprehensive attack results...</p>
+            <div id="comparison-tab" class="tab-content active">
+                <div id="comparison-summary" class="stats-grid">
+                    <!-- Summary will be populated by JavaScript -->
+                </div>
+                
+                <h3 class="section-title">Security Score Comparison</h3>
+                <div class="chart-container" style="position: relative; height: 350px;">
+                    <canvas id="comparison-chart"></canvas>
+                </div>
+                
+                <h3 class="section-title">Vulnerable Prompts: Before vs After Hardening</h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label for="comparison-category-filter">Category</label>
+                        <select id="comparison-category-filter">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="comparison-search">Search</label>
+                        <input type="text" id="comparison-search" placeholder="Search vulnerable prompts...">
+                    </div>
+                </div>
+                
+                <div class="controls-center">
+                    <button id="apply-comparison-filters">Apply Filters</button>
+                    <button id="clear-comparison-filters">Clear Filters</button>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">Category</th>
+                            <th style="width: 12%;">Attack Type</th>
+                            <th style="width: 28%;">Prompt</th>
+                            <th style="width: 28%;">Response Before</th>
+                            <th style="width: 28%;">Response After</th>
+                            <th style="width: 10%;">Improvement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-results-table">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-
+    
     <script>
+        // Global variables for comparison data
+        let comparisonData = [];
+        let filteredComparisonData = [];
+        let comparisonChart = null;
+        
         // Tab switching functionality
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -255,153 +378,286 @@
                 document.getElementById(`${tabName}-tab`).classList.add('active');
             });
         });
-
-        // Load detailed metrics
-        async function loadMetrics() {
+        
+        // Load before/after comparison data
+        async function loadComparisonData() {
             try {
-                const response = await fetch('/api/security-metrics');
+                const response = await fetch('/api/before-after-comparison');
                 const data = await response.json();
                 
                 if (data.success) {
-                    const tbody = document.getElementById('metrics-table-body');
-                    tbody.innerHTML = '';
+                    // Log data for debugging
+                    console.log('Received comparison data:', data);
                     
-                    for (const [model, metrics] of Object.entries(data.metrics)) {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${model}</td>
-                            <td>${metrics.total_tests}</td>
-                            <td>${metrics.successful_tests}</td>
-                            <td>${metrics.refusals}</td>
-                            <td>${metrics.compliances}</td>
-                            <td>${metrics.security_score}%</td>
-                            <td>${metrics.vulnerability_rate}%</td>
-                        `;
-                        tbody.appendChild(row);
+                    // Validate data structure
+                    if (!data.data || !data.data.before_stats || !data.data.after_stats) {
+                        console.error('Invalid data structure received:', data);
+                        // Show error in chart container
+                        const chartContainer = document.querySelector('.chart-container');
+                        if (chartContainer) {
+                            chartContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #f59e0b; font-weight: bold;">Invalid data structure received</div>';
+                        }
+                        return;
+                    }
+                    
+                    comparisonData = data.data.comparison;
+                    // Filter for vulnerable-before prompts only by default
+                    filteredComparisonData = comparisonData.filter(item => item.vulnerable_before);
+                    
+                    // Update comparison summary
+                    updateComparisonSummary(data.data);
+                    
+                    // Populate category filter
+                    populateComparisonCategoryFilter(filteredComparisonData);
+                    
+                    // Display comparison results
+                    displayComparisonResults();
+                    
+                    // Create comparison chart
+                    createComparisonChart(data.data);
+                } else {
+                    document.getElementById('comparison-summary').innerHTML = '<div style="text-align: center; padding: 2rem; color: #ef4444; font-weight: bold;">Error loading data: ' + data.error + '</div>';
+                    // Show error in chart container as well
+                    const chartContainer = document.querySelector('.chart-container');
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ef4444; font-weight: bold;">Unable to load comparison data</div>';
                     }
                 }
             } catch (error) {
-                console.error('Error loading metrics:', error);
+                document.getElementById('comparison-summary').innerHTML = '<p>Error loading data: ' + error.message + '</p>';
             }
         }
         
-        // Load detailed results
-        async function loadDetailedResults() {
-            try {
-                const response = await fetch('/api/results');
-                const data = await response.json();
-                
-                if (data.success) {
-                    const tbody = document.getElementById('detailed-results-table');
-                    tbody.innerHTML = '';
-                    
-                    data.data.forEach(result => {
-                        const row = document.createElement('tr');
-                        const statusClass = result.refused ? 'safe' : (result.success ? '' : 'vulnerable');
-                        const statusText = result.refused ? 'Refused' : (result.success ? 'Compliant' : 'Error');
-                        
-                        row.innerHTML = `
-                            <td>${result.llm}</td>
-                            <td>${result.category}</td>
-                            <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
-                            <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
-                            <td class="${statusClass}">${statusText}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading detailed results:', error);
-            }
-        }
-        
-        // Load comprehensive attack results
-        async function loadComprehensiveResults() {
-            try {
-                const response = await fetch('/api/comprehensive-results');
-                const data = await response.json();
-                
-                if (data.success) {
-                    const container = document.getElementById('comprehensive-results-content');
-                    container.innerHTML = '';
-                    
-                    // Create a table for comprehensive results
-                    const table = document.createElement('table');
-                    table.innerHTML = `
-                        <thead>
-                            <tr>
-                                <th>Attack Type</th>
-                                <th>Prompt</th>
-                                <th>Response</th>
-                                <th>Vulnerable</th>
-                            </tr>
-                        </thead>
-                        <tbody id="comprehensive-results-body"></tbody>
-                    `;
-                    
-                    container.appendChild(table);
-                    const tbody = document.getElementById('comprehensive-results-body');
-                    
-                    // Flatten the results array
-                    const allResults = data.data.flat();
-                    
-                    allResults.forEach(result => {
-                        const row = document.createElement('tr');
-                        const vulnerableClass = result.vulnerable ? 'vulnerable' : 'safe';
-                        const vulnerableText = result.vulnerable ? 'Yes' : 'No';
-                        
-                        row.innerHTML = `
-                            <td>${result.attack_type}</td>
-                            <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
-                            <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
-                            <td class="${vulnerableClass}">${vulnerableText}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                } else {
-                    document.getElementById('comprehensive-results-content').innerHTML = '<p>Error loading comprehensive results: ' + data.error + '</p>';
-                }
-            } catch (error) {
-                document.getElementById('comprehensive-results-content').innerHTML = '<p>Error loading comprehensive results: ' + error.message + '</p>';
-            }
-        }
-        
-        // Generate report
-        document.getElementById('generate-report-btn')?.addEventListener('click', async () => {
-            const btn = document.getElementById('generate-report-btn');
-            btn.disabled = true;
-            btn.textContent = 'Generating...';
+        // Update comparison summary
+        function updateComparisonSummary(data) {
+            const summaryContainer = document.getElementById('comparison-summary');
+            // Count vulnerable prompts and improvements
+            const vulnerableBeforeCount = comparisonData.filter(item => item.vulnerable_before).length;
+            const improvedCount = comparisonData.filter(item => item.improved).length;
+            const regressedCount = comparisonData.filter(item => item.regressed).length;
             
+            summaryContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${vulnerableBeforeCount}</div>
+                    <div class="stat-label">Vulnerable Before</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value improvement-positive">${improvedCount}</div>
+                    <div class="stat-label">Improved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value improvement-negative">${regressedCount}</div>
+                    <div class="stat-label">Regressed</div>
+                </div>
+            `;
+        }
+        
+        // Populate category filter for comparison
+        function populateComparisonCategoryFilter(data) {
+            const categories = [...new Set(data.map(item => item.category))];
+            const select = document.getElementById('comparison-category-filter');
+            
+            // Clear existing options except the first one
+            select.innerHTML = '<option value="">All Categories</option>';
+            
+            // Add categories
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        }
+        
+        // Display comparison results
+        function displayComparisonResults() {
+            const tbody = document.getElementById('comparison-results-table');
+            tbody.innerHTML = '';
+            
+            filteredComparisonData.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Determine status and class
+                let statusText = 'Unchanged';
+                let statusClass = '';
+                if (item.improved) {
+                    statusText = 'Improved';
+                    statusClass = 'improvement-positive';
+                } else if (item.regressed) {
+                    statusText = 'Regressed';
+                    statusClass = 'improvement-negative';
+                }
+                
+                row.innerHTML = `
+                    <td style="word-wrap: break-word;">${item.category}</td>
+                    <td style="word-wrap: break-word;">${item.attack_type}</td>
+                    <td style="word-wrap: break-word;">${item.prompt}</td>
+                    <td style="word-wrap: break-word;">${item.response_before}</td>
+                    <td style="word-wrap: break-word;">${item.response_after}</td>
+                    <td class="${statusClass}" style="text-align: center; font-weight: 500;">${statusText}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Apply comparison filters
+        function applyComparisonFilters() {
+            const categoryFilter = document.getElementById('comparison-category-filter').value;
+            const searchInput = document.getElementById('comparison-search').value.toLowerCase();
+            
+            // Filter for vulnerable-before prompts only
+            filteredComparisonData = comparisonData.filter(item => {
+                // Only show prompts that were vulnerable in the BEFORE stage
+                if (!item.vulnerable_before) {
+                    return false;
+                }
+                
+                // Category filter
+                if (categoryFilter && item.category !== categoryFilter) {
+                    return false;
+                }
+                
+                // Search filter
+                if (searchInput) {
+                    const promptMatch = item.prompt.toLowerCase().includes(searchInput);
+                    const responseBeforeMatch = item.response_before.toLowerCase().includes(searchInput);
+                    const responseAfterMatch = item.response_after.toLowerCase().includes(searchInput);
+                    if (!promptMatch && !responseBeforeMatch && !responseAfterMatch) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayComparisonResults();
+        }
+        
+        // Clear comparison filters
+        function clearComparisonFilters() {
+            document.getElementById('comparison-category-filter').value = '';
+            document.getElementById('comparison-search').value = '';
+            // Maintain filter for vulnerable-before prompts only
+            filteredComparisonData = comparisonData.filter(item => item.vulnerable_before);
+            displayComparisonResults();
+        }
+        
+        // Create comparison chart
+        function createComparisonChart(data) {
             try {
-                const response = await fetch('/api/generate-report', {
-                    method: 'POST'
+                const ctx = document.getElementById('comparison-chart');
+                
+                if (!ctx) {
+                    console.error('Canvas element not found');
+                    return;
+                }
+                
+                const canvasCtx = ctx.getContext('2d');
+                if (!canvasCtx) {
+                    console.error('Unable to get 2D context from canvas');
+                    return;
+                }
+                
+                // Destroy existing chart if it exists
+                if (comparisonChart) {
+                    comparisonChart.destroy();
+                }
+                
+                // Count vulnerable prompts and improvements for chart
+                const vulnerableBeforeCount = comparisonData.filter(item => item.vulnerable_before).length;
+                const improvedCount = comparisonData.filter(item => item.improved).length;
+                const stillVulnerableCount = vulnerableBeforeCount - improvedCount;
+                
+                // Log values for debugging
+                console.log('Chart values - Vulnerable Before:', vulnerableBeforeCount, 'Improved:', improvedCount, 'Still Vulnerable:', stillVulnerableCount);
+                
+                comparisonChart = new Chart(canvasCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Vulnerable Before', 'Improved', 'Still Vulnerable'],
+                        datasets: [
+                            {
+                                label: 'Prompt Count',
+                                data: [vulnerableBeforeCount, improvedCount, stillVulnerableCount],
+                                backgroundColor: [
+                                    '#ef4444',  // red for vulnerable
+                                    '#10b981',  // green for improved
+                                    '#f59e0b'   // yellow for still vulnerable
+                                ],
+                                borderColor: [
+                                    '#ef4444',
+                                    '#10b981',
+                                    '#f59e0b'
+                                ],
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#cbd5e1',
+                                borderColor: '#334155',
+                                borderWidth: 1
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#cbd5e1',
+                                    callback: function(value) {
+                                        return value;
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#cbd5e1'
+                                }
+                            }
+                        }
+                    }
                 });
                 
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Report generated successfully!');
-                } else {
-                    alert(`Error: ${data.error}`);
-                }
+                console.log('Chart created successfully');
             } catch (error) {
-                alert(`Network error: ${error.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Generate Full Report';
+                console.error('Error creating chart:', error);
+                // Show error message in chart container
+                const chartContainer = document.querySelector('.chart-container');
+                if (chartContainer) {
+                    chartContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ef4444; font-weight: bold;">Error loading chart: ' + error.message + '</div>';
+                }
             }
-        });
+        }
         
-        // Download CSV
-        document.getElementById('download-csv-btn')?.addEventListener('click', () => {
-            window.location.href = '/download/csv/security_test_results.csv';
+        // Event listeners for comparison filters
+        document.getElementById('apply-comparison-filters')?.addEventListener('click', applyComparisonFilters);
+        document.getElementById('clear-comparison-filters')?.addEventListener('click', clearComparisonFilters);
+        
+        // Add event listener for Enter key in search input
+        document.getElementById('comparison-search')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyComparisonFilters();
+            }
         });
         
         // Load all data when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            loadMetrics();
-            loadDetailedResults();
-            loadComprehensiveResults();
+            loadComparisonData();
         });
     </script>
 </body>

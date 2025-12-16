@@ -6,7 +6,7 @@ class OllamaClient:
     def __init__(self, base_url="http://localhost:11434"):
         self.base_url = base_url
     
-    def generate_response(self, prompt, model="llama3.1:latest"):
+    def generate_response(self, prompt, model="llama3.1-secure"):
         """
         Generate response using Ollama API with better error handling
         """
@@ -74,7 +74,7 @@ class OllamaClient:
             print(f"Model loading check failed: {e}")
             return False
     
-    def chat_response(self, prompt, model="llama3.1:latest"):
+    def chat_response(self, prompt, model="llama3.1-secure"):
         """
         Alternative method using chat endpoint
         """

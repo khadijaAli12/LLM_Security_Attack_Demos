@@ -89,7 +89,7 @@ def send_prompt():
     try:
         data = request.json
         prompt = data.get('prompt', '')
-        model = data.get('model', 'llama3.1:latest')
+        model = data.get('model', 'llama3.1-secure')
         
         if not prompt:
             return jsonify({
@@ -192,135 +192,8 @@ def generate_dataset():
 
 @app.route('/results')
 def results():
-    """Results page"""
-    try:
-        df = pd.read_csv('security_test_results.csv')
-        
-        # Calculate summary stats
-        summary = {
-            'total_tests': len(df),
-            'llms_tested': df['llm'].nunique(),
-            'categories': df['category'].nunique()
-        }
-        
-        # Security scores
-        security_scores = {}
-        for llm in df['llm'].unique():
-            llm_data = df[df['llm'] == llm]
-            successful = len(llm_data[llm_data['success'] == True])
-            refusals = len(llm_data[llm_data['refused'] == True])
-            score = (refusals / successful * 100) if successful > 0 else 0
-            security_scores[llm] = round(score, 2)
-        
-        results_data = {
-            'summary': summary,
-            'security_scores': security_scores,
-            'has_results': True
-        }
-    except FileNotFoundError:
-        results_data = {'has_results': False}
-    
-    return render_template('results.html', data=results_data)
-
-@app.route('/api/results')
-def api_results():
-    """API endpoint for results"""
-    try:
-        df = pd.read_csv('security_test_results.csv')
-        return jsonify({
-            'success': True,
-            'data': df.to_dict('records')
-        })
-    except FileNotFoundError:
-        return jsonify({
-            'success': False,
-            'error': 'No results found. Run tests first.'
-        })
-
-@app.route('/api/generate-report', methods=['POST'])
-def generate_report():
-    """Generate comprehensive report"""
-    try:
-        generator = SecurityReportGenerator('security_test_results.csv')
-        generator.generate_full_report()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Report generated successfully'
-        })
-    except FileNotFoundError:
-        return jsonify({
-            'success': False,
-            'error': 'No results found. Run tests first.'
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
-
-@app.route('/api/security-metrics')
-def security_metrics():
-    """Get detailed security metrics"""
-    try:
-        df = pd.read_csv('security_test_results.csv')
-        
-        metrics = {}
-        for llm in df['llm'].unique():
-            llm_data = df[df['llm'] == llm]
-            total = len(llm_data)
-            successful = len(llm_data[llm_data['success'] == True])
-            refusals = len(llm_data[llm_data['refused'] == True])
-            compliances = len(llm_data[llm_data['refused'] == False])
-            
-            metrics[llm] = {
-                'total_tests': total,
-                'successful_tests': successful,
-                'refusals': refusals,
-                'compliances': compliances,
-                'security_score': round((refusals / successful * 100) if successful > 0 else 0, 2),
-                'vulnerability_rate': round((compliances / successful * 100) if successful > 0 else 0, 2)
-            }
-        
-        return jsonify({
-            'success': True,
-            'metrics': metrics
-        })
-    except FileNotFoundError:
-        return jsonify({
-            'success': False,
-            'error': 'No results found'
-        })
-
-@app.route('/api/category-analysis')
-def category_analysis():
-    """Get vulnerability by category"""
-    try:
-        df = pd.read_csv('security_test_results.csv')
-        
-        analysis = {}
-        for category in df['category'].unique():
-            cat_data = df[df['category'] == category]
-            
-            category_results = {}
-            for llm in df['llm'].unique():
-                llm_cat_data = cat_data[cat_data['llm'] == llm]
-                if len(llm_cat_data) > 0:
-                    refusal_rate = (len(llm_cat_data[llm_cat_data['refused'] == True]) / 
-                                   len(llm_cat_data) * 100)
-                    category_results[llm] = round(refusal_rate, 2)
-            
-            analysis[category] = category_results
-        
-        return jsonify({
-            'success': True,
-            'analysis': analysis
-        })
-    except FileNotFoundError:
-        return jsonify({
-            'success': False,
-            'error': 'No results found'
-        })
+    """Results page - simplified to only show before/after comparison"""
+    return render_template('results.html')
 
 @app.route('/comprehensive-results')
 def comprehensive_results_page():
@@ -331,12 +204,101 @@ def comprehensive_results_page():
 def comprehensive_results():
     """API endpoint for comprehensive attack results"""
     try:
-        with open('comprehensive_attack_results.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return jsonify({
-            'success': True,
-            'data': data
-        })
+        # Check for our new complete results files first
+        before_file = 'complete_all_categories_before.json'
+        after_file = 'complete_all_categories_after.json'
+        
+        # If we have both before and after, return them separately
+        if os.path.exists(before_file) and os.path.exists(after_file):
+            with open(before_file, 'r', encoding='utf-8') as f:
+                before_data = json.load(f)
+            with open(after_file, 'r', encoding='utf-8') as f:
+                after_data = json.load(f)
+            
+            # Flatten both datasets
+            before_flat = [item for sublist in before_data for item in sublist]
+            after_flat = [item for sublist in after_data for item in sublist]
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'before': before_flat,
+                    'after': after_flat,
+                    'comparison': True
+                }
+            })
+        else:
+            # Check for our previous complete results files
+            before_file = 'complete_comprehensive_attack_results_before.json'
+            after_file = 'complete_comprehensive_attack_results_after.json'
+            
+            if os.path.exists(before_file) and os.path.exists(after_file):
+                with open(before_file, 'r', encoding='utf-8') as f:
+                    before_data = json.load(f)
+                with open(after_file, 'r', encoding='utf-8') as f:
+                    after_data = json.load(f)
+                
+                # Flatten both datasets
+                before_flat = [item for sublist in before_data for item in sublist]
+                after_flat = [item for sublist in after_data for item in sublist]
+                
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'before': before_flat,
+                        'after': after_flat,
+                        'comparison': True
+                    }
+                })
+            else:
+                # Check for before/after results from original files
+                before_file = None
+                after_file = None
+                
+                # Look for before and after results
+                import glob
+                before_files = glob.glob('comprehensive_attack_results_before*.json')
+                after_files = glob.glob('comprehensive_attack_results_after*.json')
+                
+                if before_files:
+                    before_file = sorted(before_files)[-1]  # Get most recent
+                if after_files:
+                    after_file = sorted(after_files)[-1]  # Get most recent
+                
+                # If we have both before and after, return them separately
+                if before_file and after_file:
+                    with open(before_file, 'r', encoding='utf-8') as f:
+                        before_data = json.load(f)
+                    with open(after_file, 'r', encoding='utf-8') as f:
+                        after_data = json.load(f)
+                    
+                    # Flatten both datasets
+                    before_flat = [item for sublist in before_data for item in sublist]
+                    after_flat = [item for sublist in after_data for item in sublist]
+                    
+                    return jsonify({
+                        'success': True,
+                        'data': {
+                            'before': before_flat,
+                            'after': after_flat,
+                            'comparison': True
+                        }
+                    })
+                else:
+                    # Fall back to main results file
+                    with open('comprehensive_attack_results.json', 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # Flatten the data
+                    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
+                        flat_data = [item for sublist in data for item in sublist]
+                    else:
+                        flat_data = data
+                        
+                    return jsonify({
+                        'success': True,
+                        'data': flat_data
+                    })
     except FileNotFoundError:
         return jsonify({
             'success': False,
@@ -348,30 +310,211 @@ def comprehensive_results():
             'error': f'Error loading comprehensive results: {str(e)}'
         })
 
-@app.route('/download/<filetype>/<filename>')
-def download_file(filetype, filename):
-    """Download generated files in different formats"""
+@app.route('/api/before-after-comparison')
+def before_after_comparison():
+    """API endpoint for before/after comparison data"""
     try:
-        if filetype == 'csv':
-            # Original CSV download
-            return send_file(filename, as_attachment=True)
+        # Check for our new complete results files first
+        before_file = 'complete_all_categories_before.json'
+        after_file = 'complete_all_categories_after.json'
+        
+        # If we have both before and after, return them separately
+        if os.path.exists(before_file) and os.path.exists(after_file):
+            with open(before_file, 'r', encoding='utf-8') as f:
+                before_data = json.load(f)
+            with open(after_file, 'r', encoding='utf-8') as f:
+                after_data = json.load(f)
+            
+            # Flatten both datasets
+            before_flat = [item for sublist in before_data for item in sublist]
+            after_flat = [item for sublist in after_data for item in sublist]
+            
+            # Calculate summary statistics
+            before_stats = calculate_comparison_stats(before_flat)
+            after_stats = calculate_comparison_stats(after_flat)
+            
+            # Match results by prompt to create comparison pairs
+            comparison_data = create_comparison_pairs(before_flat, after_flat)
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'before': before_flat,
+                    'after': after_flat,
+                    'before_stats': before_stats,
+                    'after_stats': after_stats,
+                    'comparison': comparison_data,
+                    'comparison_summary': {
+                        'total_tests': len(comparison_data),
+                        'improved': sum(1 for item in comparison_data if item['improved']),
+                        'regressed': sum(1 for item in comparison_data if item['regressed']),
+                        'unchanged': sum(1 for item in comparison_data if not item['improved'] and not item['regressed'])
+                    }
+                }
+            })
         else:
-            return jsonify({'success': False, 'error': 'Unsupported file type. Only CSV downloads are supported.'}), 400
-    except FileNotFoundError:
+            return jsonify({
+                'success': False,
+                'error': 'Before/after results not found. Run tests first.'
+            })
+    except Exception as e:
         return jsonify({
             'success': False,
-            'error': 'File not found'
-        }), 404
+            'error': f'Error loading comparison data: {str(e)}'
+        })
 
+def calculate_comparison_stats(results):
+    """Calculate statistics for a set of results"""
+    total = len(results)
+    vulnerable = sum(1 for r in results if r.get('vulnerable', False))
+    safe = total - vulnerable
+    
+    return {
+        'total_tests': total,
+        'vulnerable': vulnerable,
+        'safe': safe,
+        'vulnerability_rate': round((vulnerable / total * 100) if total > 0 else 0, 2),
+        'security_score': round((safe / total * 100) if total > 0 else 0, 2)
+    }
 
+def create_comparison_pairs(before_results, after_results):
+    """Create comparison pairs by matching prompts"""
+    # Create dictionaries for faster lookup
+    before_dict = {(r['prompt'], r['attack_type']): r for r in before_results}
+    after_dict = {(r['prompt'], r['attack_type']): r for r in after_results}
+    
+    comparison_pairs = []
+    
+    # Match results by prompt and attack type
+    for key, before_item in before_dict.items():
+        if key in after_dict:
+            after_item = after_dict[key]
+            
+            # Determine if there was improvement/regression
+            improved = before_item['vulnerable'] and not after_item['vulnerable']
+            regressed = not before_item['vulnerable'] and after_item['vulnerable']
+            
+            comparison_pairs.append({
+                'prompt': before_item['prompt'],
+                'response_before': before_item['response'],
+                'response_after': after_item['response'],
+                'attack_type': before_item['attack_type'],
+                'category': before_item.get('category', before_item['attack_type']),
+                'vulnerable_before': before_item['vulnerable'],
+                'vulnerable_after': after_item['vulnerable'],
+                'improved': improved,
+                'regressed': regressed
+            })
+    
+    return comparison_pairs
 
+@app.route('/api/dataset-categories')
+def dataset_categories():
+    """API endpoint for dataset categories"""
+    try:
+        dataset_dir = 'datasets'
+        categories = []
+        
+        # List all reduced dataset files
+        dataset_files = [
+            'advanced_jailbreaks_reduced.txt',
+            'advanced_prompt_injections_reduced.txt',
+            'adversarial_prompts_reduced.txt',
+            'context_manipulation_reduced.txt',
+            'hallucination_attacks_reduced.txt',
+            'information_extraction_reduced.txt',
+            'jailbreaks_comprehensive_reduced.txt',
+            'obfuscated_attacks_reduced.txt',
+            'payload_injection_reduced.txt',
+            'social_engineering_reduced.txt'
+        ]
+        
+        for file_name in dataset_files:
+            file_path = os.path.join(dataset_dir, file_name)
+            if os.path.exists(file_path):
+                # Count prompts in file
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    prompt_count = content.count('---')
+                
+                # Extract category name from filename
+                category_name = file_name.replace('_reduced.txt', '').replace('_', ' ').title()
+                
+                categories.append({
+                    'name': category_name,
+                    'file': file_name,
+                    'count': prompt_count
+                })
+        
+        return jsonify({
+            'success': True,
+            'categories': categories
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error loading dataset categories: {str(e)}'
+        })
 
-
-
-
-def generate_pdf_report():
-    """Removed PDF generation functionality"""
-    return jsonify({'success': False, 'error': 'PDF functionality has been removed'}), 400
+@app.route('/api/dataset-prompts/<category>')
+def dataset_prompts(category):
+    """API endpoint for prompts in a specific category"""
+    try:
+        # Map category names back to filenames
+        category_map = {
+            'Advanced Jailbreaks': 'advanced_jailbreaks_reduced.txt',
+            'Advanced Prompt Injections': 'advanced_prompt_injections_reduced.txt',
+            'Adversarial Prompts': 'adversarial_prompts_reduced.txt',
+            'Context Manipulation': 'context_manipulation_reduced.txt',
+            'Hallucination Attacks': 'hallucination_attacks_reduced.txt',
+            'Information Extraction': 'information_extraction_reduced.txt',
+            'Jailbreaks Comprehensive': 'jailbreaks_comprehensive_reduced.txt',
+            'Obfuscated Attacks': 'obfuscated_attacks_reduced.txt',
+            'Payload Injection': 'payload_injection_reduced.txt',
+            'Social Engineering': 'social_engineering_reduced.txt'
+        }
+        
+        file_name = category_map.get(category)
+        if not file_name:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid category'
+            })
+        
+        file_path = os.path.join('datasets', file_name)
+        if not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': 'Dataset file not found'
+            })
+        
+        prompts = []
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Split by delimiter
+            prompt_sections = content.split('---')
+            for section in prompt_sections:
+                section = section.strip()
+                if section:
+                    # Extract prompt type (first line) and text (rest)
+                    lines = section.split('\n')
+                    if lines:
+                        prompt_type = lines[0].strip()
+                        prompt_text = '\n'.join(lines[1:]).strip()
+                        prompts.append({
+                            'type': prompt_type,
+                            'text': prompt_text
+                        })
+        
+        return jsonify({
+            'success': True,
+            'prompts': prompts
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error loading dataset prompts: {str(e)}'
+        })
 
 if __name__ == '__main__':
     print("\n" + "="*60)

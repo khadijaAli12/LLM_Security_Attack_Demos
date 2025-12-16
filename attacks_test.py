@@ -109,13 +109,22 @@ class LLMAttackTester:
             response = requests.post(
                 f"{self.base_url}/api/generate",
                 json={
-                    "model": "llama3.1:latest",
+                    "model": "llama3.1-secure",
                     "prompt": prompt,
                     "stream": False
                 },
-                timeout=30
+                timeout=300  # Increased to 5 minutes to match Ollama client settings
             )
+            response.raise_for_status()  # Raise an exception for bad status codes
             return response.json()['response']
+        except requests.exceptions.Timeout:
+            return "Error: Request timeout - Model not responding (timeout after 5 minutes)"
+        except requests.exceptions.ConnectionError:
+            return "Error: Cannot connect to Ollama - Check if server is running"
+        except requests.exceptions.RequestException as e:
+            return f"Error: Request failed with status code {e.response.status_code if e.response else 'unknown'}"
+        except KeyError:
+            return "Error: Unexpected response format - 'response' field missing"
         except Exception as e:
             return f"Error: {str(e)}"
     
@@ -169,6 +178,114 @@ class LLMAttackTester:
         
         # If it has vulnerability indicators and lacks safe responses, it's potentially vulnerable
         return has_vulnerability_indicators and not has_safe_responses
+    
+    def get_test_categories(self):
+        """Return available test categories"""
+        return {
+            "Advanced Jailbreaks": "advanced_jailbreaks_reduced.txt",
+            "Advanced Prompt Injections": "advanced_prompt_injections_reduced.txt",
+            "Information Extraction": "information_extraction_reduced.txt",
+            "Obfuscated Attacks": "obfuscated_attacks_reduced.txt",
+            "Social Engineering": "social_engineering_reduced.txt",
+            "Payload Injection": "payload_injection_reduced.txt",
+            "Hallucination Attacks": "hallucination_attacks_reduced.txt",
+            "Context Manipulation": "context_manipulation_reduced.txt",
+            "Adversarial Prompts": "adversarial_prompts_reduced.txt",
+            "Comprehensive Jailbreaks": "jailbreaks_comprehensive_reduced.txt"
+        }
+    
+    def run_category_test(self, category_name, test_suffix=""):
+        """Run test for a specific category and save results without overwriting"""
+        categories = self.get_test_categories()
+        
+        if category_name not in categories:
+            print(f"Unknown category: {category_name}")
+            return
+        
+        filename = categories[category_name]
+        prompts = self.load_prompts_from_file(filename)
+        
+        if not prompts:
+            print(f"No prompts found for category: {category_name}")
+            return
+        
+        print(f"Running test for category: {category_name} with {len(prompts)} prompts")
+        
+        # Run the test
+        results = []
+        if category_name == "Advanced Jailbreaks":
+            results = self.advanced_jailbreaks()
+        elif category_name == "Advanced Prompt Injections":
+            results = self.advanced_prompt_injections()
+        elif category_name == "Information Extraction":
+            results = self.information_extraction()
+        elif category_name == "Obfuscated Attacks":
+            results = self.obfuscated_attacks()
+        elif category_name == "Social Engineering":
+            results = self.social_engineering()
+        elif category_name == "Payload Injection":
+            results = self.payload_injection()
+        elif category_name == "Hallucination Attacks":
+            results = self.hallucination_attacks()
+        elif category_name == "Context Manipulation":
+            results = self.context_manipulation()
+        elif category_name == "Adversarial Prompts":
+            results = self.adversarial_prompts()
+        elif category_name == "Comprehensive Jailbreaks":
+            results = self.comprehensive_jailbreaks()
+        
+        # Save results without overwriting previous ones
+        self.save_category_results(category_name, results, test_suffix)
+        
+        return results
+    
+    def save_category_results(self, category_name, results, test_suffix=""):
+        """Save category results without overwriting existing results"""
+        # Determine the main results file
+        if test_suffix:
+            main_filename = f'comprehensive_attack_results_{test_suffix}.json'
+        else:
+            main_filename = 'comprehensive_attack_results.json'
+        
+        # Load existing results if file exists
+        existing_results = []
+        if os.path.exists(main_filename):
+            try:
+                with open(main_filename, 'r', encoding='utf-8') as f:
+                    existing_results = json.load(f)
+            except Exception as e:
+                print(f"Warning: Could not load existing results: {e}")
+                existing_results = []
+        
+        # Check if this category already exists in results
+        category_exists = False
+        for i, category_group in enumerate(existing_results):
+            if category_group and category_group[0]['attack_type'] == category_name:
+                # Replace the category results
+                existing_results[i] = results
+                category_exists = True
+                break
+        
+        # If category doesn't exist, add it
+        if not category_exists:
+            existing_results.append(results)
+        
+        # Save updated results
+        try:
+            with open(main_filename, 'w', encoding='utf-8') as f:
+                json.dump(existing_results, f, indent=2, ensure_ascii=False)
+            print(f"Results for '{category_name}' saved to {main_filename}")
+        except Exception as e:
+            print(f"Error saving results: {e}")
+        
+        # Also save category-specific results
+        category_filename = f'{category_name.replace(" ", "_").lower()}_results_{test_suffix}.json' if test_suffix else f'{category_name.replace(" ", "_").lower()}_results.json'
+        try:
+            with open(category_filename, 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            print(f"Category-specific results saved to {category_filename}")
+        except Exception as e:
+            print(f"Error saving category-specific results: {e}")
 
 # Run tests with all prompts
 if __name__ == "__main__":
@@ -182,44 +299,36 @@ if __name__ == "__main__":
         print("Please run the dataset creation script first.")
         exit(1)
     
+    # Get available categories
+    categories = tester.get_test_categories()
+    
     # Determine test type (before/after) from command line argument
     test_suffix = ""
     if len(sys.argv) > 1:
-        test_suffix = sys.argv[1]
-        print(f"🚀 Starting {test_suffix.capitalize()} LLM Security Testing...")
+        # Check if first argument is a category name
+        first_arg = sys.argv[1]
+        if first_arg in categories:
+            # Run specific category
+            category_name = first_arg
+            if len(sys.argv) > 2:
+                test_suffix = sys.argv[2]
+            print(f"Starting {category_name} LLM Security Testing ({test_suffix})...")
+            tester.run_category_test(category_name, test_suffix)
+            exit(0)
+        else:
+            # Run all categories with suffix
+            test_suffix = first_arg
+            print(f"Starting Comprehensive LLM Security Testing ({test_suffix})...")
+            
+            # Run all tests category by category to avoid memory issues
+            for category_name in categories.keys():
+                tester.run_category_test(category_name, test_suffix)
+            exit(0)
     else:
-        print("🚀 Starting Comprehensive LLM Security Testing...")
-    
-    # Run all tests to use maximum prompts from reduced dataset
-    tests = [
-        tester.advanced_jailbreaks(),
-        tester.advanced_prompt_injections(),
-        tester.information_extraction(),
-        tester.obfuscated_attacks(),
-        tester.social_engineering(),
-        tester.payload_injection(),
-        tester.hallucination_attacks(),
-        tester.context_manipulation(),
-        tester.adversarial_prompts(),
-        tester.comprehensive_jailbreaks()
-    ]
-    
-    # Save results with appropriate suffix
-    if test_suffix:
-        filename = f'comprehensive_attack_results_{test_suffix}.json'
-    else:
-        filename = 'comprehensive_attack_results.json'
-    
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(tests, f, indent=2, ensure_ascii=False)
-    
-    print(f"✅ Comprehensive testing complete! Results saved to {filename}")
-    
-    # Print summary
-    total_tests = sum(len(test_group) for test_group in tests)
-    vulnerable_count = sum(sum(1 for test in test_group if test['vulnerable']) for test_group in tests)
-    
-    print(f"\n📊 Summary:")
-    print(f"   Total prompts tested: {total_tests}")
-    print(f"   Potentially vulnerable responses: {vulnerable_count}")
-    print(f"   Security rate: {((total_tests - vulnerable_count) / total_tests * 100):.1f}%")
+        print("Starting Comprehensive LLM Security Testing...")
+        print("Available categories:")
+        for cat in categories.keys():
+            print(f"  - {cat}")
+        print("\nTo test all categories: python attacks_test.py [before|after]")
+        print("To test a specific category: python attacks_test.py \"Category Name\" [before|after]")
+        exit(0)

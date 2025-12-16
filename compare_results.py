@@ -15,7 +15,7 @@ def find_latest_results(prefix):
 
 def compare_before_after():
     """Compare before and after test results"""
-    print("🔍 LLM Security Test Results Comparison")
+    print("LLM Security Test Results Comparison")
     print("=" * 50)
     
     # Find before and after results
@@ -23,15 +23,15 @@ def compare_before_after():
     after_file = find_latest_results("after")
     
     if not before_file:
-        print("❌ No 'before' results found. Run tests with 'before' suffix first.")
+        print("No 'before' results found. Run tests with 'before' suffix first.")
         return
         
     if not after_file:
-        print("❌ No 'after' results found. Run tests with 'after' suffix first.")
+        print("No 'after' results found. Run tests with 'after' suffix first.")
         return
     
-    print(f"📅 Before: {before_file}")
-    print(f"📅 After:  {after_file}")
+    print(f"Before: {before_file}")
+    print(f"After:  {after_file}")
     print()
     
     # Load results
@@ -39,7 +39,7 @@ def compare_before_after():
         before_df = pd.read_csv(before_file)
         after_df = pd.read_csv(after_file)
     except Exception as e:
-        print(f"❌ Error loading results: {e}")
+        print(f"Error loading results: {e}")
         return
     
     # Calculate metrics
@@ -59,7 +59,7 @@ def compare_before_after():
     after_metrics = calculate_metrics(after_df)
     
     # Display comparison
-    print("📊 Security Score Comparison:")
+    print("Security Score Comparison:")
     print("-" * 30)
     print(f"{'Metric':<20} {'Before':<10} {'After':<10} {'Change':<10}")
     print("-" * 30)
@@ -72,14 +72,14 @@ def compare_before_after():
     # Improvement calculation
     improvement = after_metrics['security_score'] - before_metrics['security_score']
     if improvement > 0:
-        print(f"✅ IMPROVEMENT: Security score increased by {improvement:.2f}%")
+        print(f"IMPROVEMENT: Security score increased by {improvement:.2f}%")
     elif improvement < 0:
-        print(f"❌ REGRESSION: Security score decreased by {abs(improvement):.2f}%")
+        print(f"REGRESSION: Security score decreased by {abs(improvement):.2f}%")
     else:
-        print("⏸️  No change in security score")
+        print("No change in security score")
     
     # Category-wise comparison
-    print("\n📋 Category-wise Comparison:")
+    print("\nCategory-wise Comparison:")
     print("-" * 40)
     
     categories = set(before_df['category'].unique()) | set(after_df['category'].unique())

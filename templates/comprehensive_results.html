@@ -5,226 +5,421 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comprehensive Attack Results - LLM Security Testing</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f7fa;
-            color: #333;
+        :root {
+            --bg-dark: #121826;
+            --bg-card: #1e293b;
+            --bg-light: #2d3748;
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
         }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
+        
+        * {
             margin: 0;
-            font-size: 2.5em;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
         }
-        .card h2 {
-            margin-top: 0;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 10px;
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.2s;
-            margin: 5px;
+        
+        header {
+            background: linear-gradient(135deg, var(--bg-card), #0f172a);
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
         }
-        .btn:hover {
-            transform: translateY(-2px);
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
-        .btn:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
+        
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
         }
+        
         .back-link {
             display: inline-block;
-            margin-bottom: 20px;
-            color: #667eea;
+            margin: 1.5rem 0;
+            color: var(--primary);
             text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
+        
         .back-link:hover {
-            text-decoration: underline;
+            background-color: rgba(79, 70, 229, 0.1);
         }
+        
+        .panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-header {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin: 0.3rem;
+        }
+        
+        button:hover {
+            background: var(--primary-light);
+        }
+        
+        button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 1.5rem 0;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
         }
+        
         th, td {
-            padding: 12px;
+            padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
         }
+        
         th {
-            background-color: #f7fafc;
+            background: var(--bg-light);
             font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
         }
+        
+        /* Column width specifications */
+        th:nth-child(1), td:nth-child(1) { width: 10%; }
+        th:nth-child(2), td:nth-child(2) { width: 10%; }
+        th:nth-child(3), td:nth-child(3) { width: 20%; }
+        th:nth-child(4), td:nth-child(4) { width: 30%; }
+        th:nth-child(5), td:nth-child(5) { width: 15%; }
+        th:nth-child(6), td:nth-child(6) { width: 15%; }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
         tr:hover {
-            background-color: #f7fafc;
+            background-color: rgba(79, 70, 229, 0.05);
         }
+        
         .vulnerable {
-            background-color: #fee2e2;
-            color: #991b1b;
-            font-weight: bold;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
         }
+        
         .safe {
-            background-color: #dcfce7;
-            color: #166534;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
         }
+        
         .error {
-            background-color: #fef3c7;
-            color: #92400e;
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
         }
+        
+        .before-hardening {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+        
+        .after-hardening {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+        
+        .unknown-stage {
+            background-color: rgba(100, 100, 100, 0.15);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+        
         .filter-controls {
-            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1.2rem;
+            background: var(--bg-light);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .filter-group {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            flex-direction: column;
         }
-        .filter-controls select, .filter-controls input {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+        
+        .filter-group label {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
         }
+        
+        .filter-group select, .filter-group input {
+            padding: 0.7rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
         .pagination {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
-            gap: 5px;
+            margin-top: 2rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
+        
         .pagination button {
-            padding: 8px 12px;
-            background: #e2e8f0;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            min-width: 40px;
         }
+        
         .pagination button.active {
-            background: #667eea;
-            color: white;
+            background: var(--primary);
+            border-color: var(--primary);
         }
-        .pagination button:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
+        
+        .pagination button:hover:not(.active):not(:disabled) {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+        }
+        
+        .controls-center {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .page-info {
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--text-secondary);
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>🎯 Comprehensive Attack Results</h1>
-        <p>Detailed view of all security test executions</p>
+        <div class="container">
+            <h1>Comprehensive Attack Results</h1>
+            <p>Examine individual attack responses and vulnerability assessments</p>
+        </div>
     </header>
-
-    <a href="/" class="back-link">← Back to Dashboard</a>
-
-    <div class="card">
-        <h2>Filter Results</h2>
-        <div class="filter-controls">
-            <select id="category-filter">
-                <option value="">All Categories</option>
-                <!-- Categories will be populated by JavaScript -->
-            </select>
-            <select id="vulnerability-filter">
-                <option value="">All Statuses</option>
-                <option value="vulnerable">Vulnerable</option>
-                <option value="safe">Safe</option>
-                <option value="error">Error</option>
-            </select>
-            <input type="text" id="search-input" placeholder="Search prompts or responses...">
-            <button id="apply-filters" class="btn">Apply Filters</button>
-            <button id="clear-filters" class="btn">Clear</button>
+    
+    <div class="container">
+        <a href="/" class="back-link">← Dashboard</a>
+        
+        <div class="panel">
+            <h2 class="panel-header">Attack Results</h2>
+            
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="category-filter">Category</label>
+                    <select id="category-filter">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="vulnerability-filter">Vulnerability Status</label>
+                    <select id="vulnerability-filter">
+                        <option value="">All Statuses</option>
+                        <option value="vulnerable">Vulnerable</option>
+                        <option value="safe">Safe</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="hardening-filter">Hardening Stage</label>
+                    <select id="hardening-filter">
+                        <option value="">All Stages</option>
+                        <option value="Before Hardening">Before Hardening</option>
+                        <option value="After Hardening">After Hardening</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="search-input">Search</label>
+                    <input type="text" id="search-input" placeholder="Search prompts...">
+                </div>
+            </div>
+            
+            <div class="controls-center">
+                <button id="apply-filters">Apply Filters</button>
+                <button id="clear-filters">Clear Filters</button>
+            </div>
+            
+            <div class="page-info" id="page-info">
+                Showing results...
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Attack Type</th>
+                        <th>Category</th>
+                        <th>Prompt</th>
+                        <th>Response</th>
+                        <th>Hardening Stage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table">
+                    <!-- Results will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="pagination" id="pagination">
+                <!-- Pagination will be populated by JavaScript -->
+            </div>
         </div>
     </div>
-
-    <div class="card">
-        <h2>Attack Results</h2>
-        <div id="results-summary">
-            <p>Loading results...</p>
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Attack Type</th>
-                    <th>Category</th>
-                    <th>Prompt</th>
-                    <th>Response</th>
-                    <th>Status</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody id="results-table-body">
-                <!-- Results will be populated by JavaScript -->
-            </tbody>
-        </table>
-        
-        <div class="pagination" id="pagination">
-            <!-- Pagination will be populated by JavaScript -->
-        </div>
-    </div>
-
+    
     <script>
         // Global variables
         let allResults = [];
         let filteredResults = [];
         let currentPage = 1;
-        const resultsPerPage = 20;
+        const resultsPerPage = 50;
         
-        // Load comprehensive attack results
-        async function loadComprehensiveResults() {
+        // Load results
+        async function loadResults() {
             try {
                 const response = await fetch('/api/comprehensive-results');
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Flatten the results array
-                    allResults = data.data.flat();
+                    // Handle different data structures
+                    if (Array.isArray(data.data)) {
+                        // Single dataset (flat array)
+                        allResults = data.data.map(item => ({ ...item, hardeningStage: 'Unknown' }));
+                    } else if (data.data.before && data.data.after) {
+                        // Comparison data - combine both datasets with tagging
+                        const beforeData = data.data.before.map(item => ({ ...item, hardeningStage: 'Before Hardening' }));
+                        const afterData = data.data.after.map(item => ({ ...item, hardeningStage: 'After Hardening' }));
+                        allResults = [...beforeData, ...afterData];
+                    } else if (data.data.before) {
+                        // Only before data
+                        allResults = data.data.before.map(item => ({ ...item, hardeningStage: 'Before Hardening' }));
+                    } else if (data.data.after) {
+                        // Only after data
+                        allResults = data.data.after.map(item => ({ ...item, hardeningStage: 'After Hardening' }));
+                    } else {
+                        // Fallback - try to flatten whatever data we have
+                        let flattenedData = data.data.flat ? data.data.flat() : Object.values(data.data).flat();
+                        allResults = flattenedData.map(item => ({ ...item, hardeningStage: 'Unknown' }));
+                    }
+                    
                     filteredResults = [...allResults];
                     
                     // Populate category filter
-                    populateCategoryFilter();
+                    populateCategoryFilter(allResults);
                     
                     // Display results
                     displayResults();
-                    
-                    // Update summary
-                    document.getElementById('results-summary').innerHTML = 
-                        `<p>Showing ${allResults.length} total results</p>`;
                 } else {
-                    document.getElementById('results-summary').innerHTML = 
-                        `<p>Error loading results: ${data.error}</p>`;
+                    document.getElementById('results-table').innerHTML = '<tr><td colspan="6">Error loading results: ' + data.error + '</td></tr>';
                 }
             } catch (error) {
-                document.getElementById('results-summary').innerHTML = 
-                    `<p>Error loading results: ${error.message}</p>`;
+                document.getElementById('results-table').innerHTML = '<tr><td colspan="6">Error loading results: ' + error.message + '</td></tr>';
             }
         }
         
-        // Populate category filter dropdown
-        function populateCategoryFilter() {
-            const categories = [...new Set(allResults.map(result => result.attack_type))];
+        // Populate category filter
+        function populateCategoryFilter(data) {
+            const categories = [...new Set(data.map(item => item.category || item.attack_type))];
             const select = document.getElementById('category-filter');
             
             // Clear existing options except the first one
@@ -239,96 +434,53 @@
             });
         }
         
-        // Apply filters
-        function applyFilters() {
-            const categoryFilter = document.getElementById('category-filter').value;
-            const vulnerabilityFilter = document.getElementById('vulnerability-filter').value;
-            const searchInput = document.getElementById('search-input').value.toLowerCase();
-            
-            filteredResults = allResults.filter(result => {
-                // Category filter
-                if (categoryFilter && result.attack_type !== categoryFilter) {
-                    return false;
-                }
-                
-                // Vulnerability filter
-                if (vulnerabilityFilter) {
-                    if (vulnerabilityFilter === 'vulnerable' && !result.vulnerable) {
-                        return false;
-                    }
-                    if (vulnerabilityFilter === 'safe' && result.vulnerable) {
-                        return false;
-                    }
-                    if (vulnerabilityFilter === 'error' && !result.response.startsWith('Error:')) {
-                        return false;
-                    }
-                }
-                
-                // Search filter
-                if (searchInput) {
-                    const promptMatch = result.prompt.toLowerCase().includes(searchInput);
-                    const responseMatch = result.response.toLowerCase().includes(searchInput);
-                    if (!promptMatch && !responseMatch) {
-                        return false;
-                    }
-                }
-                
-                return true;
-            });
-            
-            currentPage = 1;
-            displayResults();
-        }
-        
-        // Clear filters
-        function clearFilters() {
-            document.getElementById('category-filter').value = '';
-            document.getElementById('vulnerability-filter').value = '';
-            document.getElementById('search-input').value = '';
-            filteredResults = [...allResults];
-            currentPage = 1;
-            displayResults();
-        }
-        
         // Display results with pagination
         function displayResults() {
+            // Calculate pagination
             const startIndex = (currentPage - 1) * resultsPerPage;
-            const endIndex = startIndex + resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, filteredResults.length);
             const pageResults = filteredResults.slice(startIndex, endIndex);
             
-            const tbody = document.getElementById('results-table-body');
+            // Update page info
+            document.getElementById('page-info').textContent = 
+                `Showing ${startIndex + 1}-${endIndex} of ${filteredResults.length} results`;
+            
+            // Display results
+            const tbody = document.getElementById('results-table');
             tbody.innerHTML = '';
             
             if (pageResults.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="6" style="text-align: center;">No results found</td>';
-                tbody.appendChild(row);
-            } else {
-                pageResults.forEach(result => {
-                    const row = document.createElement('tr');
-                    
-                    // Determine status and class
-                    let statusText = 'Safe';
-                    let statusClass = 'safe';
-                    if (result.vulnerable) {
-                        statusText = 'Vulnerable';
-                        statusClass = 'vulnerable';
-                    } else if (result.response.startsWith('Error:')) {
-                        statusText = 'Error';
-                        statusClass = 'error';
-                    }
-                    
-                    row.innerHTML = `
-                        <td>${result.attack_type}</td>
-                        <td>${result.category || result.attack_type}</td>
-                        <td style="max-width: 300px; word-wrap: break-word;">${result.prompt}</td>
-                        <td style="max-width: 300px; word-wrap: break-word;">${result.response}</td>
-                        <td class="${statusClass}">${statusText}</td>
-                        <td>-</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                tbody.innerHTML = '<tr><td colspan="6">No results found</td></tr>';
+                return;
             }
+            
+            pageResults.forEach(result => {
+                const row = document.createElement('tr');
+                
+                // Determine status and class
+                let statusText = 'Unknown';
+                let statusClass = '';
+                if (result.vulnerable === true) {
+                    statusText = 'Vulnerable';
+                    statusClass = 'vulnerable';
+                } else if (result.vulnerable === false) {
+                    statusText = 'Safe';
+                    statusClass = 'safe';
+                } else {
+                    statusText = 'Error';
+                    statusClass = 'error';
+                }
+                
+                row.innerHTML = `
+                    <td>${result.attack_type}</td>
+                    <td>${result.category || result.attack_type}</td>
+                    <td style="word-wrap: break-word;">${result.prompt}</td>
+                    <td style="word-wrap: break-word;">${result.response}</td>
+                    <td><span class="${result.hardeningStage === 'Before Hardening' ? 'before-hardening' : result.hardeningStage === 'After Hardening' ? 'after-hardening' : 'unknown-stage'}">${result.hardeningStage}</span></td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
             
             // Update pagination
             updatePagination();
@@ -340,13 +492,11 @@
             const pagination = document.getElementById('pagination');
             pagination.innerHTML = '';
             
-            if (totalPages <= 1) {
-                return;
-            }
+            if (totalPages <= 1) return;
             
             // Previous button
             const prevButton = document.createElement('button');
-            prevButton.textContent = 'Previous';
+            prevButton.textContent = 'Prev';
             prevButton.disabled = currentPage === 1;
             prevButton.addEventListener('click', () => {
                 if (currentPage > 1) {
@@ -357,22 +507,18 @@
             pagination.appendChild(prevButton);
             
             // Page buttons
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                    const pageButton = document.createElement('button');
-                    pageButton.textContent = i;
-                    pageButton.classList.toggle('active', i === currentPage);
-                    pageButton.addEventListener('click', () => {
-                        currentPage = i;
-                        displayResults();
-                    });
-                    pagination.appendChild(pageButton);
-                } else if (i === currentPage - 3 || i === currentPage + 3) {
-                    const ellipsis = document.createElement('button');
-                    ellipsis.textContent = '...';
-                    ellipsis.disabled = true;
-                    pagination.appendChild(ellipsis);
-                }
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    displayResults();
+                });
+                pagination.appendChild(pageButton);
             }
             
             // Next button
@@ -388,12 +534,79 @@
             pagination.appendChild(nextButton);
         }
         
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            loadComprehensiveResults();
+        // Apply filters
+        function applyFilters() {
+            const categoryFilter = document.getElementById('category-filter').value;
+            const vulnerabilityFilter = document.getElementById('vulnerability-filter').value;
+            const hardeningFilter = document.getElementById('hardening-filter').value;
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
             
-            document.getElementById('apply-filters').addEventListener('click', applyFilters);
-            document.getElementById('clear-filters').addEventListener('click', clearFilters);
+            filteredResults = allResults.filter(result => {
+                // Category filter
+                if (categoryFilter && (result.category || result.attack_type) !== categoryFilter) {
+                    return false;
+                }
+                
+                // Vulnerability filter
+                if (vulnerabilityFilter) {
+                    if (vulnerabilityFilter === 'vulnerable' && result.vulnerable !== true) {
+                        return false;
+                    }
+                    if (vulnerabilityFilter === 'safe' && result.vulnerable !== false) {
+                        return false;
+                    }
+                    if (vulnerabilityFilter === 'error' && result.vulnerable !== undefined) {
+                        return false;
+                    }
+                }
+                
+                // Hardening stage filter
+                if (hardeningFilter && result.hardeningStage !== hardeningFilter) {
+                    return false;
+                }
+                
+                // Search filter
+                if (searchInput) {
+                    const promptMatch = result.prompt.toLowerCase().includes(searchInput);
+                    const responseMatch = result.response.toLowerCase().includes(searchInput);
+                    if (!promptMatch && !responseMatch) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Reset to first page
+            currentPage = 1;
+            displayResults();
+        }
+        
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('category-filter').value = '';
+            document.getElementById('vulnerability-filter').value = '';
+            document.getElementById('hardening-filter').value = '';
+            document.getElementById('search-input').value = '';
+            filteredResults = [...allResults];
+            currentPage = 1;
+            displayResults();
+        }
+        
+        // Event listeners
+        document.getElementById('apply-filters').addEventListener('click', applyFilters);
+        document.getElementById('clear-filters').addEventListener('click', clearFilters);
+        
+        // Add event listener for Enter key in search input
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadResults();
         });
     </script>
 </body>
