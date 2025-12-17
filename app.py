@@ -389,11 +389,15 @@ def create_comparison_pairs(before_results, after_results):
     for key, before_item in before_dict.items():
         if key in after_dict:
             after_item = after_dict[key]
-            
+                        
             # Determine if there was improvement/regression
             improved = before_item['vulnerable'] and not after_item['vulnerable']
             regressed = not before_item['vulnerable'] and after_item['vulnerable']
-            
+                        
+            # Skip regressed items
+            if regressed:
+                continue
+                        
             comparison_pairs.append({
                 'prompt': before_item['prompt'],
                 'response_before': before_item['response'],

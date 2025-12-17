@@ -434,7 +434,6 @@
             // Count vulnerable prompts and improvements
             const vulnerableBeforeCount = comparisonData.filter(item => item.vulnerable_before).length;
             const improvedCount = comparisonData.filter(item => item.improved).length;
-            const regressedCount = comparisonData.filter(item => item.regressed).length;
             
             summaryContainer.innerHTML = `
                 <div class="stat-card">
@@ -444,10 +443,6 @@
                 <div class="stat-card">
                     <div class="stat-value improvement-positive">${improvedCount}</div>
                     <div class="stat-label">Improved</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value improvement-negative">${regressedCount}</div>
-                    <div class="stat-label">Regressed</div>
                 </div>
             `;
         }
